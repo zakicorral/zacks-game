@@ -57,43 +57,29 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
+    // Game state
     let isPlaying = false;
     let score = 0;
+    let frame = 0;
 
-    // Player (static image instead of sprite)
+    // Player
     const player = {
       x: 50,
       y: 300,
-      width: 80,
-      height: 80,
+      width: 72,
+      height: 72,
       dy: 0,
       jumpPower: -12,
       grounded: false,
-      sprite: new Image()
+      sprite: new Image(),
+      frameX: 0,
+      frameY: 0,
+      speed: 0.2
     };
-    player.sprite.src = "player.png"; // use any single image (cat, stickman, etc.)
+    player.sprite.src = "player_run.png"; // Your custom character sprite sheet
 
-    // Background
-    const bg = new Image();
-    bg.src = "background.png"; 
-    let bgX = 0;
-
-    // Obstacles
-    const obstacleSprite = new Image();
-    obstacleSprite.src = "obstacle.png";
-    const obstacles = [];
-
-    function spawnObstacle() {
-      obstacles.push({
-        x: canvas.width,
-        y: 330,
-        width: 50,
-        height: 50,
-        speed: 6
-      });
-    }
-
-    function update() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Background scroll
+    // Background layers
+    const sky = new Image();
+    const clouds = new Image();
+    const farGround = new Image();
+    const cl
