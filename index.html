@@ -1,109 +1,72 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Runner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Endless Background</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background: black;
     }
+
     canvas {
       display: block;
-      margin: auto;
-      background: black;
+      margin: 0 auto;
+      width: 100vw;
+      height: 100vh;
     }
   </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="800" height="400"></canvas>
+  <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-let frame = 0;
+    // Load all background layers
+    const layers = [
+      { img: new Image(), src: "images/1.png", speed: 0.2 }, // sky
+      { img: new Image(), src: "images/2.png", speed: 0.5 }, // clouds
+      { img: new Image(), src: "images/3.png", speed: 1.0 }, // far ground
+      { img: new Image(), src: "images/4.png", speed: 2.0 }, // close ground
+      { img: new Image(), src: "images/5.png", speed: 3.0 }  // bird layer (optional decor)
+    ];
 
-// Backgrounds
-const sky = new Image(); sky.src = "images/1.png";
-const clouds = new Image(); clouds.src = "images/2.png";
-const farGround = new Image(); farGround.src = "images/3.png";
-const closeGround = new Image(); closeGround.src = "images/4.png";
-const bird = new Image(); bird.src = "images/5.png";
+    // Assign image sources
+    layers.forEach(layer => layer.img.src = layer.src);
 
-// Player
-const player = {
-  x: 50,
-  y: 280,
-  width: 72,
-  height: 72,
-  frameX: 0,
-  frameY: 0,
-  sprite: new Image()
-};
-player.sprite.src = "images/run.png"; // running animation sheet
+    // Track position for each layer
+    layers.forEach(layer => layer.x = 0);
 
-// Background scroll positions
-let cloudX1 = 0, cloudX2 = canvas.width;
-let farX1 = 0, farX2 = canvas.width;
-let closeX1 = 0, closeX2 = canvas.width;
+    function drawLayer(layer) {
+      layer.x -= layer.speed;
+      if (layer.x <= -canvas.width) layer.x = 0;
 
-// Draw loop
-function gameLoop() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(layer.img, layer.x, 0, canvas.width, canvas.height);
+      ctx.drawImage(layer.img, layer.x + canvas.width, 0, canvas.width, canvas.height);
+    }
 
-  // Sky (fills canvas, static)
-  ctx.drawImage(sky, 0, 0, canvas.width, canvas.height);
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Clouds (scrolling slow)
-  cloudX1 -= 1; cloudX2 -= 1;
-  if(cloudX1 <= -canvas.width) cloudX1 = canvas.width;
-  if(cloudX2 <= -canvas.width) cloudX2 = canvas.width;
-  ctx.drawImage(clouds, cloudX1, 50, canvas.width, 150);
-  ctx.drawImage(clouds, cloudX2, 50, canvas.width, 150);
+      layers.forEach(layer => {
+        drawLayer(layer);
+      });
 
-  // Far ground
-  farX1 -= 2; farX2 -= 2;
-  if(farX1 <= -canvas.width) farX1 = canvas.width;
-  if(farX2 <= -canvas.width) farX2 = canvas.width;
-  ctx.drawImage(farGround, farX1, 200, canvas.width, 200);
-  ctx.drawImage(farGround, farX2, 200, canvas.width, 200);
+      requestAnimationFrame(update);
+    }
 
-  // Close ground
-  closeX1 -= 4; closeX2 -= 4;
-  if(closeX1 <= -canvas.width) closeX1 = canvas.width;
-  if(closeX2 <= -canvas.width) closeX2 = canvas.width;
-  ctx.drawImage(closeGround, closeX1, 300, canvas.width, 100);
-  ctx.drawImage(closeGround, closeX2, 300, canvas.width, 100);
-
-  // Player
-  ctx.drawImage(
-    player.sprite,
-    player.frameX * player.width, player.frameY * player.height,
-    player.width, player.height,
-    player.x, player.y, player.width, player.height
-  );
-
-  // Animate player frames
-  if(frame % 6 === 0) {
-    player.frameX++;
-    if(player.frameX > 5) player.frameX = 0; // 6 frames in run.png
-  }
-
-  frame++;
-  requestAnimationFrame(gameLoop);
-}
-
-// Wait for all images
-let loaded = 0;
-const assets = [sky, clouds, farGround, closeGround, bird, player.sprite];
-assets.forEach(img => {
-  img.onload = () => {
-    loaded++;
-    if(loaded === assets.length) gameLoop();
-  }
-});
-</script>
+    // Start once all images are loaded
+    let loaded = 0;
+    layers.forEach(layer => {
+      layer.img.onload = () => {
+        loaded++;
+        if (loaded === layers.length) update();
+      };
+    });
+  </script>
 </body>
 </html>
