@@ -14,7 +14,7 @@
     #gameCanvas {
       display: block;
       margin: 0 auto;
-      background: #87ceeb; /* Sky color fallback */
+      background: #87ceeb;
     }
 
     #ui {
@@ -57,35 +57,30 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Game state
     let isPlaying = false;
     let score = 0;
-    let frame = 0;
 
-    // Player
+    // Player (static image instead of sprite)
     const player = {
       x: 50,
       y: 300,
-      width: 72,
-      height: 72,
+      width: 80,
+      height: 80,
       dy: 0,
       jumpPower: -12,
       grounded: false,
-      sprite: new Image(),
-      frameX: 0,
-      frameY: 0,
-      speed: 0.2
+      sprite: new Image()
     };
-    player.sprite.src = "player_run.png"; // Sprite sheet (6 frames, 1 row)
+    player.sprite.src = "player.png"; // use any single image (cat, stickman, etc.)
 
     // Background
     const bg = new Image();
-    bg.src = "background.png"; // Wide background (looping)
+    bg.src = "background.png"; 
     let bgX = 0;
 
     // Obstacles
     const obstacleSprite = new Image();
-    obstacleSprite.src = "obstacle.png"; // Simple obstacle (rock, cactus, etc.)
+    obstacleSprite.src = "obstacle.png";
     const obstacles = [];
 
     function spawnObstacle() {
@@ -100,88 +95,5 @@
 
     function update() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      frame++;
 
       // Background scroll
-      bgX -= 2;
-      if (bgX <= -canvas.width) bgX = 0;
-      ctx.drawImage(bg, bgX, 0, canvas.width, canvas.height);
-      ctx.drawImage(bg, bgX + canvas.width, 0, canvas.width, canvas.height);
-
-      // Player physics
-      player.y += player.dy;
-      if (player.y + player.height < 380) {
-        player.dy += 0.6; // gravity
-        player.grounded = false;
-      } else {
-        player.y = 380 - player.height;
-        player.dy = 0;
-        player.grounded = true;
-      }
-
-      // Player animation
-      if (isPlaying) {
-        player.frameX += player.speed;
-        if (player.frameX >= 6) player.frameX = 0;
-      }
-      ctx.drawImage(
-        player.sprite,
-        Math.floor(player.frameX) * player.width, 0,
-        player.width, player.height,
-        player.x, player.y, player.width, player.height
-      );
-
-      // Obstacles
-      for (let i = 0; i < obstacles.length; i++) {
-        let ob = obstacles[i];
-        ob.x -= ob.speed;
-        ctx.drawImage(obstacleSprite, ob.x, ob.y, ob.width, ob.height);
-
-        // Collision
-        if (player.x < ob.x + ob.width &&
-            player.x + player.width > ob.x &&
-            player.y < ob.y + ob.height &&
-            player.y + player.height > ob.y) {
-          gameOver();
-        }
-
-        // Remove off-screen
-        if (ob.x + ob.width < 0) {
-          obstacles.splice(i, 1);
-          score++;
-          document.getElementById("score").innerText = score;
-        }
-      }
-
-      if (isPlaying) requestAnimationFrame(update);
-    }
-
-    function jump() {
-      if (player.grounded) {
-        player.dy = player.jumpPower;
-      }
-    }
-
-    function gameOver() {
-      isPlaying = false;
-      alert("Game Over! Final Score: " + score);
-      location.reload();
-    }
-
-    // Controls
-    document.addEventListener("keydown", e => {
-      if (e.code === "Space") jump();
-    });
-
-    document.getElementById("startBtn").addEventListener("click", () => {
-      isPlaying = true;
-      score = 0;
-      document.getElementById("score").innerText = score;
-      setInterval(spawnObstacle, 2000);
-      update();
-      document.getElementById("startBtn").style.display = "none";
-    });
-  </script>
-</body>
-</html>
-
