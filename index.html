@@ -16,28 +16,16 @@
     dy: 0,
     jumpPower: -12,
     grounded: false,
-    sprite: new Image(),
-    frameX: 0,
-    frameY: 0,
-    speed: 0.2
+    sprite: new Image()
   };
-  player.sprite.src = "images/player_run.png"; // <-- put in images folder
+  player.sprite.src = "images/idle.png"; // use idle.png for now
 
   // Background layers
-  const sky = new Image();
-  sky.src = "images/1.png"; // sky
-
-  const clouds = new Image();
-  clouds.src = "images/2.png"; // clouds
-
-  const farGround = new Image();
-  farGround.src = "images/3.png"; // far ground (mountains etc.)
-
-  const closeGround = new Image();
-  closeGround.src = "images/4.png"; // close ground
-
-  const bird = new Image();
-  bird.src = "images/5.png"; // bird
+  const sky = new Image(); sky.src = "images/1.png";
+  const clouds = new Image(); clouds.src = "images/2.png";
+  const farGround = new Image(); farGround.src = "images/3.png";
+  const closeGround = new Image(); closeGround.src = "images/4.png";
+  const bird = new Image(); bird.src = "images/5.png";
 
   // Scrolling positions
   let bgLayers = [
@@ -47,26 +35,11 @@
     { img: closeGround, x: 0, speed: 3 }
   ];
 
-  // Obstacles
-  const obstacleSprite = new Image();
-  obstacleSprite.src = "images/obstacle.png";
-  const obstacles = [];
-
-  function spawnObstacle() {
-    obstacles.push({
-      x: canvas.width,
-      y: 330,
-      width: 50,
-      height: 50,
-      speed: 6
-    });
-  }
-
   function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     frame++;
 
-    // Draw background layers
+    // Background layers scroll
     bgLayers.forEach(layer => {
       layer.x -= layer.speed;
       if (layer.x <= -canvas.width) layer.x = 0;
@@ -74,7 +47,7 @@
       ctx.drawImage(layer.img, layer.x + canvas.width, 0, canvas.width, canvas.height);
     });
 
-    // Bird floating (optional little animation)
+    // Bird floating
     let birdY = 100 + Math.sin(frame * 0.05) * 10;
     ctx.drawImage(bird, 600, birdY, 60, 60);
 
@@ -89,39 +62,8 @@
       player.grounded = true;
     }
 
-    // Player animation
-    if (isPlaying) {
-      player.frameX += player.speed;
-      if (player.frameX >= 6) player.frameX = 0;
-    }
-    ctx.drawImage(
-      player.sprite,
-      Math.floor(player.frameX) * player.width, 0,
-      player.width, player.height,
-      player.x, player.y, player.width, player.height
-    );
-
-    // Obstacles
-    for (let i = 0; i < obstacles.length; i++) {
-      let ob = obstacles[i];
-      ob.x -= ob.speed;
-      ctx.drawImage(obstacleSprite, ob.x, ob.y, ob.width, ob.height);
-
-      // Collision
-      if (player.x < ob.x + ob.width &&
-          player.x + player.width > ob.x &&
-          player.y < ob.y + ob.height &&
-          player.y + player.height > ob.y) {
-        gameOver();
-      }
-
-      // Remove off-screen
-      if (ob.x + ob.width < 0) {
-        obstacles.splice(i, 1);
-        score++;
-        document.getElementById("score").innerText = score;
-      }
-    }
+    // Draw player (idle image for now)
+    ctx.drawImage(player.sprite, player.x, player.y, player.width, player.height);
 
     if (isPlaying) requestAnimationFrame(update);
   }
@@ -129,11 +71,13 @@
   function jump() {
     if (player.grounded) {
       player.dy = player.jumpPower;
+      player.sprite.src = "images/jump.png"; // switch to jump
     }
   }
 
   function gameOver() {
     isPlaying = false;
+    player.sprite.src = "images/dead.png"; // show dead
     alert("Game Over! Final Score: " + score);
     location.reload();
   }
@@ -147,7 +91,6 @@
     isPlaying = true;
     score = 0;
     document.getElementById("score").innerText = score;
-    setInterval(spawnObstacle, 2000);
     update();
     document.getElementById("startBtn").style.display = "none";
   });
