@@ -8,20 +8,19 @@
       margin: 0;
       overflow: hidden;
       font-family: 'Press Start 2P', cursive;
-      background: linear-gradient(to top, #87ceeb, #e0f7fa);
+      background: black;
     }
 
     #gameCanvas {
       display: block;
       margin: 0 auto;
-      background: url('background.png') repeat-x;
-      background-size: cover;
+      background: #87ceeb; /* Sky color fallback */
     }
 
     #ui {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 20px;
+      left: 20px;
       color: white;
       font-size: 20px;
       text-shadow: 2px 2px 5px black;
@@ -58,59 +57,85 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
+    // Game state
     let isPlaying = false;
     let score = 0;
-    let gravity = 0.6;
+    let frame = 0;
 
+    // Player
     const player = {
       x: 50,
       y: 300,
-      width: 50,
-      height: 50,
+      width: 72,
+      height: 72,
       dy: 0,
       jumpPower: -12,
       grounded: false,
-      sprite: new Image()
+      sprite: new Image(),
+      frameX: 0,
+      frameY: 0,
+      speed: 0.2
     };
+    player.sprite.src = "player_run.png"; // Sprite sheet (6 frames, 1 row)
 
-    player.sprite.src = "player.png"; // <-- Replace with running sprite
+    // Background
+    const bg = new Image();
+    bg.src = "background.png"; // Wide background (looping)
+    let bgX = 0;
 
+    // Obstacles
+    const obstacleSprite = new Image();
+    obstacleSprite.src = "obstacle.png"; // Simple obstacle (rock, cactus, etc.)
     const obstacles = [];
 
     function spawnObstacle() {
-      let size = Math.random() * 30 + 20;
       obstacles.push({
         x: canvas.width,
-        y: 350 - size,
-        width: size,
-        height: size,
+        y: 330,
+        width: 50,
+        height: 50,
         speed: 6
       });
     }
 
     function update() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frame++;
 
-      // Draw player
-      ctx.drawImage(player.sprite, player.x, player.y, player.width, player.height);
+      // Background scroll
+      bgX -= 2;
+      if (bgX <= -canvas.width) bgX = 0;
+      ctx.drawImage(bg, bgX, 0, canvas.width, canvas.height);
+      ctx.drawImage(bg, bgX + canvas.width, 0, canvas.width, canvas.height);
 
-      // Gravity
+      // Player physics
       player.y += player.dy;
-      if (player.y + player.height < 350) {
-        player.dy += gravity;
+      if (player.y + player.height < 380) {
+        player.dy += 0.6; // gravity
         player.grounded = false;
       } else {
-        player.y = 350 - player.height;
+        player.y = 380 - player.height;
         player.dy = 0;
         player.grounded = true;
       }
+
+      // Player animation
+      if (isPlaying) {
+        player.frameX += player.speed;
+        if (player.frameX >= 6) player.frameX = 0;
+      }
+      ctx.drawImage(
+        player.sprite,
+        Math.floor(player.frameX) * player.width, 0,
+        player.width, player.height,
+        player.x, player.y, player.width, player.height
+      );
 
       // Obstacles
       for (let i = 0; i < obstacles.length; i++) {
         let ob = obstacles[i];
         ob.x -= ob.speed;
-        ctx.fillStyle = "red";
-        ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+        ctx.drawImage(obstacleSprite, ob.x, ob.y, ob.width, ob.height);
 
         // Collision
         if (player.x < ob.x + ob.width &&
@@ -120,6 +145,7 @@
           gameOver();
         }
 
+        // Remove off-screen
         if (ob.x + ob.width < 0) {
           obstacles.splice(i, 1);
           score++;
@@ -138,7 +164,7 @@
 
     function gameOver() {
       isPlaying = false;
-      alert("Game Over! Score: " + score);
+      alert("Game Over! Final Score: " + score);
       location.reload();
     }
 
@@ -151,10 +177,11 @@
       isPlaying = true;
       score = 0;
       document.getElementById("score").innerText = score;
-      setInterval(spawnObstacle, 1500);
+      setInterval(spawnObstacle, 2000);
       update();
       document.getElementById("startBtn").style.display = "none";
     });
   </script>
 </body>
 </html>
+
