@@ -1,34 +1,160 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Just for You 💖</title>
+  <title>Endless Runner</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 50px; background: #fff0f5; }
-    h1 { color: #d6336c; }
-    button { padding: 10px 20px; font-size: 18px; margin-top: 20px; cursor: pointer; }
-    input { padding: 10px; font-size: 16px; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(to top, #87ceeb, #e0f7fa);
+    }
+
+    #gameCanvas {
+      display: block;
+      margin: 0 auto;
+      background: url('background.png') repeat-x;
+      background-size: cover;
+    }
+
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+      text-shadow: 2px 2px 5px black;
+    }
+
+    .button {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff9800;
+      border: none;
+      padding: 15px 30px;
+      font-size: 20px;
+      font-family: inherit;
+      cursor: pointer;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+    }
+
+    .button:hover {
+      background: #ffc107;
+      transform: translateX(-50%) scale(1.05);
+    }
   </style>
 </head>
 <body>
-  <h1>Guess the Secret Word!</h1>
-  <p>I made this little game just for you ❤️</p>
-  <input id="guess" type="text" placeholder="Type your guess here" />
-  <button onclick="checkGuess()">Submit</button>
-  <p id="result"></p>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <div id="ui">Score: <span id="score">0</span></div>
+  <button id="startBtn" class="button">Start Game</button>
 
   <script>
-    const secret = "love"; // You can change this!
-    function checkGuess() {
-      const guess = document.getElementById("guess").value.toLowerCase();
-      const result = document.getElementById("result");
-      if (guess === secret) {
-        result.textContent = "You got it right! 🥰";
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let isPlaying = false;
+    let score = 0;
+    let gravity = 0.6;
+
+    const player = {
+      x: 50,
+      y: 300,
+      width: 50,
+      height: 50,
+      dy: 0,
+      jumpPower: -12,
+      grounded: false,
+      sprite: new Image()
+    };
+
+    player.sprite.src = "player.png"; // <-- Replace with running sprite
+
+    const obstacles = [];
+
+    function spawnObstacle() {
+      let size = Math.random() * 30 + 20;
+      obstacles.push({
+        x: canvas.width,
+        y: 350 - size,
+        width: size,
+        height: size,
+        speed: 6
+      });
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw player
+      ctx.drawImage(player.sprite, player.x, player.y, player.width, player.height);
+
+      // Gravity
+      player.y += player.dy;
+      if (player.y + player.height < 350) {
+        player.dy += gravity;
+        player.grounded = false;
       } else {
-        result.textContent = "Try again, my love 💫";
+        player.y = 350 - player.height;
+        player.dy = 0;
+        player.grounded = true;
+      }
+
+      // Obstacles
+      for (let i = 0; i < obstacles.length; i++) {
+        let ob = obstacles[i];
+        ob.x -= ob.speed;
+        ctx.fillStyle = "red";
+        ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+
+        // Collision
+        if (player.x < ob.x + ob.width &&
+            player.x + player.width > ob.x &&
+            player.y < ob.y + ob.height &&
+            player.y + player.height > ob.y) {
+          gameOver();
+        }
+
+        if (ob.x + ob.width < 0) {
+          obstacles.splice(i, 1);
+          score++;
+          document.getElementById("score").innerText = score;
+        }
+      }
+
+      if (isPlaying) requestAnimationFrame(update);
+    }
+
+    function jump() {
+      if (player.grounded) {
+        player.dy = player.jumpPower;
       }
     }
+
+    function gameOver() {
+      isPlaying = false;
+      alert("Game Over! Score: " + score);
+      location.reload();
+    }
+
+    // Controls
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space") jump();
+    });
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      isPlaying = true;
+      score = 0;
+      document.getElementById("score").innerText = score;
+      setInterval(spawnObstacle, 1500);
+      update();
+      document.getElementById("startBtn").style.display = "none";
+    });
   </script>
 </body>
 </html>
