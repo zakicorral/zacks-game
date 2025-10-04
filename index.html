@@ -1,109 +1,122 @@
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-// === Background Layers ===
-const layers = [
-  { img: new Image(), src: "images/1.png", speed: 0.2 },
-  { img: new Image(), src: "images/2.png", speed: 0.5 },
-  { img: new Image(), src: "images/3.png", speed: 1.0 },
-  { img: new Image(), src: "images/4.png", speed: 2.0 },
-  { img: new Image(), src: "images/5.png", speed: 3.0 }
-];
-layers.forEach(layer => {
-  layer.img.src = layer.src;
-  layer.x = 0;
-});
-
-// === Player ===
-const player = {
-  x: 150,
-  y: 500,
-  width: 128 * 1.5,   // make bigger
-  height: 128 * 1.5,  // make bigger
-  dy: 0,
-  gravity: 0.6,
-  grounded: false,
-  frame: 0,
-  frameSpeed: 0.25,
-  sprite: new Image(),
-  runSprite: new Image(),
-  jumpSprite: new Image(),
-  state: "run" // can be 'run' or 'jump'
-};
-player.runSprite.src = "images/Run.png";  
-player.jumpSprite.src = "images/Jump.png";  
-player.sprite = player.runSprite; // initial sprite
-
-// === Input ===
-document.addEventListener("keydown", e => {
-  if (e.code === "Space" && player.grounded) {
-    player.dy = -14; // jump power
-    player.grounded = false;
-    player.state = "jump";
-    player.frame = 0;
-    player.sprite = player.jumpSprite;
-  }
-});
-
-// === Draw Background Layers ===
-function drawLayer(layer) {
-  layer.x -= layer.speed;
-  if (layer.x <= -canvas.width) layer.x = 0;
-  ctx.drawImage(layer.img, layer.x, 0, canvas.width, canvas.height);
-  ctx.drawImage(layer.img, layer.x + canvas.width, 0, canvas.width, canvas.height);
-}
-
-// === Draw Player ===
-function drawPlayer() {
-  player.frame += player.frameSpeed;
-  const frameCount = 6; // number of frames per sprite sheet
-  if (player.frame >= frameCount) player.frame = 0;
-
-  ctx.drawImage(
-    player.sprite,
-    Math.floor(player.frame) * 128, 0,   // source frame width (original sprite width)
-    128, 128,                             // source frame height
-    player.x, player.y, player.width, player.height
-  );
-}
-
-// === Update Logic ===
-function update() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // background
-  layers.forEach(drawLayer);
-
-  // gravity
-  player.y += player.dy;
-  if (player.y + player.height < canvas.height - 100) {
-    player.dy += player.gravity;
-    player.grounded = false;
-  } else {
-    player.y = canvas.height - 100 - player.height;
-    player.dy = 0;
-    player.grounded = true;
-
-    // switch back to running after landing
-    if (player.state === "jump") {
-      player.state = "run";
-      player.sprite = player.runSprite;
-      player.frame = 0;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Endless Runner</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
     }
-  }
 
-  drawPlayer();
-  requestAnimationFrame(update);
-}
+    canvas {
+      display: block;
+      margin: 0 auto;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-// === Start when all images are loaded ===
-let loaded = 0;
-const totalImages = layers.length + 2; // layers + run + jump
-[...layers.map(l => l.img), player.runSprite, player.jumpSprite].forEach(img => {
-  img.onload = () => {
-    loaded++;
-    if (loaded === totalImages) update();
-  };
-});
-</script>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // === Background Layers ===
+    const layers = [
+      { img: new Image(), src: "images/1.png", speed: 0.2 },
+      { img: new Image(), src: "images/2.png", speed: 0.5 },
+      { img: new Image(), src: "images/3.png", speed: 1.0 },
+      { img: new Image(), src: "images/4.png", speed: 2.0 },
+      { img: new Image(), src: "images/5.png", speed: 3.0 }
+    ];
+    layers.forEach(layer => {
+      layer.img.src = layer.src;
+      layer.x = 0;
+    });
+
+    // === Player ===
+    const player = {
+      x: 150,
+      y: 500,
+      width: 128 * 1.5,
+      height: 128* 1.5,
+      dy: 0,
+      gravity: 0.6,
+      grounded: false,
+      frame: 0,
+      frameSpeed: 0.25,
+      sprite: new Image(),
+      state: "run" // can later be 'jump', 'idle', etc.
+    };
+    player.sprite.src = "images/Run.png"; // current animation
+
+    // === Input ===
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space" && player.grounded) {
+        player.dy = -14; // jump power
+        player.grounded = false;
+      }
+    });
+
+    // === Draw Background Layers ===
+    function drawLayer(layer) {
+      layer.x -= layer.speed;
+      if (layer.x <= -canvas.width) layer.x = 0;
+
+      ctx.drawImage(layer.img, layer.x, 0, canvas.width, canvas.height);
+      ctx.drawImage(layer.img, layer.x + canvas.width, 0, canvas.width, canvas.height);
+    }
+
+    // === Draw Player ===
+    function drawPlayer() {
+      player.frame += player.frameSpeed;
+      const frameCount = 6; // number of frames in Run.png
+      if (player.frame >= frameCount) player.frame = 0;
+
+     ctx.drawImage(
+  player.sprite,
+  Math.floor(player.frame) * 128, 0,  // source width
+  128, 128,                           // source height
+  player.x, player.y, player.width, player.height  // scaled size
+);
+    }
+
+    // === Update Logic ===
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // background
+      layers.forEach(drawLayer);
+
+      // gravity
+      player.y += player.dy;
+      if (player.y + player.height < canvas.height - 100) {
+        player.dy += player.gravity;
+        player.grounded = false;
+      } else {
+        player.y = canvas.height - 100 - player.height;
+        player.dy = 0;
+        player.grounded = true;
+      }
+
+      drawPlayer();
+      requestAnimationFrame(update);
+    }
+
+    // === Start when all images are loaded ===
+    let loaded = 0;
+    const totalImages = layers.length + 1; // layers + player
+    [...layers.map(l => l.img), player.sprite].forEach(img => {
+      img.onload = () => {
+        loaded++;
+        if (loaded === totalImages) update();
+      };
+    });
+  </script>
+</body>
+</html>
