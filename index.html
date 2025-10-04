@@ -1,97 +1,100 @@
-<script>
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Runner</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #87ceeb;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
 
-  // Game state
-  let isPlaying = false;
-  let score = 0;
-  let frame = 0;
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let frame = 0;
+
+// Backgrounds
+const sky = new Image(); sky.src = "images/1.png";
+const clouds = new Image(); clouds.src = "images/2.png";
+const farGround = new Image(); farGround.src = "images/3.png";
+const closeGround = new Image(); closeGround.src = "images/4.png";
+const bird = new Image(); bird.src = "images/5.png";
+
+// Player
+const player = {
+  x: 50,
+  y: 280,
+  width: 72,
+  height: 72,
+  frameX: 0,
+  frameY: 0,
+  sprite: new Image()
+};
+player.sprite.src = "images/run.png"; // running animation sheet
+
+// Background scroll speeds
+let cloudX1 = 0, cloudX2 = 800;
+let farX1 = 0, farX2 = 800;
+let closeX1 = 0, closeX2 = 800;
+
+// Draw loop
+function gameLoop() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Sky (static)
+  ctx.drawImage(sky, 0, 0, 800, 400);
+
+  // Clouds (scrolling slow)
+  cloudX1 -= 1; cloudX2 -= 1;
+  if(cloudX1 <= -800) cloudX1 = 800;
+  if(cloudX2 <= -800) cloudX2 = 800;
+  ctx.drawImage(clouds, cloudX1, 50, 800, 150);
+  ctx.drawImage(clouds, cloudX2, 50, 800, 150);
+
+  // Far ground
+  farX1 -= 2; farX2 -= 2;
+  if(farX1 <= -800) farX1 = 800;
+  if(farX2 <= -800) farX2 = 800;
+  ctx.drawImage(farGround, farX1, 250, 800, 150);
+  ctx.drawImage(farGround, farX2, 250, 800, 150);
+
+  // Close ground (fastest)
+  closeX1 -= 4; closeX2 -= 4;
+  if(closeX1 <= -800) closeX1 = 800;
+  if(closeX2 <= -800) closeX2 = 800;
+  ctx.drawImage(closeGround, closeX1, 300, 800, 100);
+  ctx.drawImage(closeGround, closeX2, 300, 800, 100);
 
   // Player
-  const player = {
-    x: 50,
-    y: 300,
-    width: 72,
-    height: 72,
-    dy: 0,
-    jumpPower: -12,
-    grounded: false,
-    sprite: new Image()
-  };
-  player.sprite.src = "images/idle.png"; // use idle.png for now
+  ctx.drawImage(
+    player.sprite,
+    player.frameX * player.width, player.frameY * player.height,
+    player.width, player.height,
+    player.x, player.y, player.width, player.height
+  );
 
-  // Background layers
-  const sky = new Image(); sky.src = "images/1.png";
-  const clouds = new Image(); clouds.src = "images/2.png";
-  const farGround = new Image(); farGround.src = "images/3.png";
-  const closeGround = new Image(); closeGround.src = "images/4.png";
-  const bird = new Image(); bird.src = "images/5.png";
-
-  // Scrolling positions
-  let bgLayers = [
-    { img: sky, x: 0, speed: 0.2 },
-    { img: clouds, x: 0, speed: 0.5 },
-    { img: farGround, x: 0, speed: 1.5 },
-    { img: closeGround, x: 0, speed: 3 }
-  ];
-
-  function update() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    frame++;
-
-    // Background layers scroll
-    bgLayers.forEach(layer => {
-      layer.x -= layer.speed;
-      if (layer.x <= -canvas.width) layer.x = 0;
-      ctx.drawImage(layer.img, layer.x, 0, canvas.width, canvas.height);
-      ctx.drawImage(layer.img, layer.x + canvas.width, 0, canvas.width, canvas.height);
-    });
-
-    // Bird floating
-    let birdY = 100 + Math.sin(frame * 0.05) * 10;
-    ctx.drawImage(bird, 600, birdY, 60, 60);
-
-    // Player physics
-    player.y += player.dy;
-    if (player.y + player.height < 380) {
-      player.dy += 0.6; // gravity
-      player.grounded = false;
-    } else {
-      player.y = 380 - player.height;
-      player.dy = 0;
-      player.grounded = true;
-    }
-
-    // Draw player (idle image for now)
-    ctx.drawImage(player.sprite, player.x, player.y, player.width, player.height);
-
-    if (isPlaying) requestAnimationFrame(update);
+  // Animate player frames
+  if(frame % 6 === 0) {
+    player.frameX++;
+    if(player.frameX > 5) player.frameX = 0; // adjust if your run.png has different frame count
   }
 
-  function jump() {
-    if (player.grounded) {
-      player.dy = player.jumpPower;
-      player.sprite.src = "images/jump.png"; // switch to jump
-    }
-  }
+  frame++;
+  requestAnimationFrame(gameLoop);
+}
 
-  function gameOver() {
-    isPlaying = false;
-    player.sprite.src = "images/dead.png"; // show dead
-    alert("Game Over! Final Score: " + score);
-    location.reload();
-  }
-
-  // Controls
-  document.addEventListener("keydown", e => {
-    if (e.code === "Space") jump();
-  });
-
-  document.getElementById("startBtn").addEventListener("click", () => {
-    isPlaying = true;
-    score = 0;
-    document.getElementById("score").innerText = score;
-    update();
-    document.getElementById("startBtn").style.display = "none";
-  });
-</script>
+// Wait for images to load
+let loaded = 0;
+const assets = [sky, clouds,]()
